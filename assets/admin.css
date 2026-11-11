@@ -1,0 +1,190 @@
+#access-ledger {
+	--al-ink: #172b2d;
+	--al-muted: #56676a;
+	--al-teal: #08695f;
+	--al-teal-hover: #064f49;
+	--al-line: #dce3e1;
+	--al-input: #788b88;
+	--al-wash: #f5f8f6;
+	--al-green: #eaf5ef;
+	--al-amber: #77500c;
+	--al-red: #9b3035;
+	max-width: 1420px;
+	margin: 30px 24px 32px 4px;
+	color: var(--al-ink);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+	font-size: 14px;
+	line-height: 1.6;
+	font-variant-numeric: tabular-nums;
+}
+#access-ledger *, #access-ledger *::before, #access-ledger *::after { box-sizing: border-box; }
+#access-ledger [hidden] { display: none !important; }
+#access-ledger h1, #access-ledger h2, #access-ledger h3, #access-ledger p { margin: 0; padding: 0; }
+#access-ledger h1 { color: var(--al-ink); font-size: clamp(27px, 3vw, 36px); line-height: 1.22; letter-spacing: -.035em; font-weight: 650; }
+#access-ledger h2 { color: var(--al-ink); font-size: 21px; line-height: 1.35; letter-spacing: -.025em; font-weight: 650; }
+#access-ledger h3 { color: var(--al-ink); font-size: 15px; line-height: 1.5; font-weight: 650; }
+#access-ledger p { font-size: inherit; line-height: inherit; }
+#access-ledger a { color: var(--al-teal); text-underline-offset: 3px; }
+#access-ledger :is(button, input, select) { font: inherit; }
+#access-ledger :is(button, a, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--al-teal); outline-offset: 3px; box-shadow: none; }
+#access-ledger :is(h2, h3, input) { scroll-margin-top: 70px; }
+#access-ledger .al-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 0 0 28px; }
+#access-ledger .al-header > div:first-child { max-width: 760px; }
+#access-ledger .al-eyebrow { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--al-muted); margin-bottom: 9px; }
+#access-ledger .al-mark { display: inline-grid; place-items: center; width: 23px; height: 23px; background: var(--al-teal); color: white; font-size: 20px; border-radius: 4px; margin-inline-end: 8px; vertical-align: middle; }
+#access-ledger .al-intro { color: var(--al-muted); margin-top: 11px; max-width: 660px; }
+#access-ledger .al-actions, #access-ledger .al-dialog-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#access-ledger .al-button {
+	display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+	min-height: 42px; padding: 9px 15px; border: 1px solid var(--al-input); border-radius: 5px;
+	background: white; color: var(--al-ink); font-size: 13px; font-weight: 600; line-height: 1.4;
+	cursor: pointer; text-decoration: none; box-shadow: none; white-space: normal; text-align: center;
+}
+#access-ledger .al-button:hover:not(:disabled) { background: var(--al-wash); border-color: var(--al-ink); }
+#access-ledger .al-button-primary { background: var(--al-teal); border-color: var(--al-teal); color: white; }
+#access-ledger .al-button-primary:hover:not(:disabled) { background: var(--al-teal-hover); border-color: var(--al-teal-hover); }
+#access-ledger .al-button-quiet { background: transparent; border-color: transparent; color: var(--al-muted); }
+#access-ledger .al-button-quiet:hover:not(:disabled) { border-color: var(--al-line); }
+#access-ledger button:disabled, #access-ledger select:disabled { cursor: not-allowed; opacity: .55; }
+#access-ledger .al-notice { border: 1px solid var(--al-line); border-inline-start: 3px solid var(--al-teal); border-radius: 5px; background: white; padding: 13px 17px; margin-bottom: 20px; overflow-wrap: anywhere; }
+#access-ledger .al-notice:empty { display: none; }
+#access-ledger .al-notice-error { color: #812b31; background: #fff5f4; border-color: #e7c9ca; border-inline-start-color: var(--al-red); }
+#access-ledger .al-notice-success { color: #175e45; background: var(--al-green); border-inline-start-color: #287656; }
+#access-ledger .al-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+#access-ledger .al-stat { border: 1px solid var(--al-line); background: white; border-radius: 8px; padding: 21px 25px 18px; display: flex; flex-direction: column; align-items: flex-start; }
+#access-ledger .al-stat-accent { background: #f0f7f3; border-color: #cbded5; }
+#access-ledger .al-stat strong { display: block; font-size: 40px; line-height: 1.25; letter-spacing: -.045em; font-weight: 600; margin: 12px 0 7px; }
+#access-ledger .al-stat-accent strong { color: var(--al-teal); }
+#access-ledger .al-label { font-size: 13px; font-weight: 600; }
+#access-ledger .al-muted { color: var(--al-muted); }
+#access-ledger .al-stat .al-muted { font-size: 12px; }
+#access-ledger .al-meta { font-size: 12px; color: var(--al-muted); overflow-wrap: anywhere; }
+#access-ledger .al-workspace { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+#access-ledger .al-panel { padding: 25px 28px; margin-bottom: 22px; border: 1px solid var(--al-line); border-radius: 8px; background: white; min-width: 0; }
+#access-ledger .al-section-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 14px; }
+#access-ledger .al-panel > .al-muted { margin-top: 9px; }
+#access-ledger .al-badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--al-line); border-radius: 4px; padding: 3px 8px; color: var(--al-muted); background: var(--al-wash); font-size: 11px; line-height: 1.6; font-weight: 600; white-space: normal; }
+#access-ledger .al-badge-success { background: var(--al-green); color: #175e45; border-color: #c9dfd2; }
+#access-ledger .al-badge-warning { background: #fbf4e5; color: var(--al-amber); border-color: #e8d9b5; }
+#access-ledger .al-badge-error { background: #fff0ef; color: #812b31; border-color: #e7c9ca; }
+#access-ledger .al-inline-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 22px; }
+#access-ledger .al-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#access-ledger .al-inline-form .al-field { flex: 1; min-width: 150px; }
+#access-ledger label { font-size: 12px; font-weight: 650; color: var(--al-ink); }
+#access-ledger :is(input[type="text"], input[type="search"], select) {
+	width: 100%; max-width: none; min-width: 0; min-height: 42px; margin: 0;
+	border: 1px solid var(--al-input); border-radius: 5px; background-color: #fff; color: var(--al-ink);
+	padding: 8px 12px; font-size: 14px; line-height: 1.5; box-shadow: none;
+}
+#access-ledger select { padding-inline-end: 30px; }
+#access-ledger input::placeholder { color: #657572; opacity: 1; }
+#access-ledger input[aria-invalid="true"] { border-color: var(--al-red); }
+#access-ledger .al-field-error { color: var(--al-red); font-size: 12px; margin-top: 5px; }
+#access-ledger #al-order-help { margin-top: 10px; }
+#access-ledger .al-scan-progress { margin-top: 19px; border-top: 1px solid var(--al-line); padding-top: 14px; font-size: 12px; }
+#access-ledger .al-scan-progress progress { display: block; width: 100%; height: 6px; margin-bottom: 12px; accent-color: var(--al-teal); border: 0; border-radius: 2px; overflow: hidden; background: #dcebe5; }
+#access-ledger progress::-webkit-progress-bar { background: #dcebe5; }
+#access-ledger progress::-webkit-progress-value { background: var(--al-teal); }
+#access-ledger progress::-moz-progress-bar { background: var(--al-teal); }
+#access-ledger #al-scan-date { margin-top: 3px; }
+#access-ledger .al-context { background: var(--al-wash); border-inline-start: 2px solid #839d93; padding: 13px 16px; margin: 17px 0 22px; color: #405652; font-size: 13px; }
+#access-ledger .al-filters { display: grid; grid-template-columns: minmax(180px, 1.5fr) 1fr 1fr; gap: 14px; }
+#access-ledger #al-report-scope { margin: 12px 0 18px; }
+#access-ledger .al-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+#access-ledger .al-table th { text-align: start; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--al-muted); padding: 12px 10px; background: var(--al-wash); border-block: 1px solid var(--al-line); }
+#access-ledger .al-table td { padding: 16px 10px; border-bottom: 1px solid var(--al-line); vertical-align: middle; overflow-wrap: anywhere; font-size: 13px; }
+#access-ledger .al-table tbody tr:last-child td { border-bottom: 0; }
+#access-ledger .al-table tbody tr:hover { background: #fafcfb; }
+#access-ledger .al-table th:first-child, #access-ledger .al-table td:first-child { padding-inline-start: 12px; }
+#access-ledger .al-table th:last-child, #access-ledger .al-table td:last-child { text-align: end; width: 115px; }
+#access-ledger .al-table th:first-child { width: 14%; }
+#access-ledger .al-table .al-cell-sub { display: block; margin-top: 4px; font-size: 11px; color: var(--al-muted); }
+#access-ledger .al-table .al-order-number { font-weight: 650; }
+#access-ledger .al-empty { padding: 32px 16px; text-align: center; color: var(--al-muted); border: 1px dashed var(--al-line); border-radius: 5px; margin-top: 16px; }
+#access-ledger .al-empty strong { display: block; color: var(--al-ink); font-size: 15px; margin-bottom: 5px; }
+#access-ledger .al-empty p { max-width: 560px; margin: 0 auto; font-size: 13px; }
+#access-ledger .al-explanation { border-color: #9dbdb2; border-top: 3px solid var(--al-teal); }
+#access-ledger .al-order-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; margin: 4px 0 21px; font-size: 13px; overflow-wrap: anywhere; }
+#access-ledger .al-order-summary a { margin-inline-start: auto; }
+#access-ledger .al-issues { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin: 14px 0 24px; }
+#access-ledger .al-issue { border: 1px solid var(--al-line); border-radius: 6px; background: #fcfdfc; }
+#access-ledger .al-issue summary { cursor: pointer; padding: 15px; font-weight: 600; overflow-wrap: anywhere; }
+#access-ledger .al-issue summary .al-badge { margin-inline-end: 9px; font-weight: 500; }
+#access-ledger .al-issue-body { padding: 0 16px 17px; font-size: 13px; overflow-wrap: anywhere; }
+#access-ledger .al-issue-body p + p { margin-top: 10px; }
+#access-ledger .al-issue-body .al-button { margin-top: 13px; }
+#access-ledger .al-permissions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+#access-ledger .al-permission { border: 1px solid var(--al-line); border-radius: 6px; padding: 18px; min-width: 0; }
+#access-ledger .al-permission h3 { overflow-wrap: anywhere; }
+#access-ledger .al-permission > .al-meta { margin-top: 4px; }
+#access-ledger .al-data { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 18px; margin: 16px 0 0; }
+#access-ledger .al-data div { min-width: 0; }
+#access-ledger .al-data dt { font-size: 11px; color: var(--al-muted); }
+#access-ledger .al-data dd { margin: 3px 0 0; font-size: 13px; font-weight: 550; overflow-wrap: anywhere; }
+#access-ledger .al-data .al-data-wide { grid-column: 1 / -1; }
+#access-ledger .al-footer { display: flex; justify-content: space-between; gap: 12px; padding: 1px 2px 10px; color: var(--al-muted); font-size: 11px; }
+#access-ledger .al-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 26px; border: 1px solid #aabcb7; border-radius: 9px; color: var(--al-ink); background: #fff; overflow-y: auto; box-shadow: 0 20px 80px #122b2a26; }
+#access-ledger .al-dialog::backdrop { background: #172b2d80; }
+#access-ledger .al-dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+#access-ledger .al-dialog-head .al-eyebrow { margin: 0; }
+#access-ledger #al-dialog-description { margin: 12px 0 20px; font-size: 13px; }
+#access-ledger .al-email-change { margin: 0 0 18px; border: 1px solid var(--al-line); border-radius: 6px; overflow: hidden; }
+#access-ledger .al-email-change div { padding: 15px 17px; }
+#access-ledger .al-email-change div + div { border-top: 1px solid var(--al-line); background: #eff7f3; }
+#access-ledger .al-email-change dt { font-size: 11px; color: var(--al-muted); font-weight: 600; }
+#access-ledger .al-email-change dd { font-size: 15px; margin: 5px 0 0; overflow-wrap: anywhere; }
+#access-ledger .al-dialog .al-context { margin: 15px 0; }
+#access-ledger #al-repair-form { display: flex; flex-direction: column; gap: 18px; margin-top: 22px; }
+#access-ledger .al-dialog-actions { justify-content: flex-end; margin-top: 20px; }
+#access-ledger .al-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 1100px) {
+	#access-ledger .al-workspace { grid-template-columns: 1fr; gap: 0; }
+	#access-ledger .al-header { align-items: flex-start; }
+	#access-ledger .al-actions { flex-shrink: 0; flex-direction: column; align-items: stretch; }
+	#access-ledger .al-issues { grid-template-columns: 1fr; }
+}
+@media (max-width: 782px) {
+	#access-ledger { margin: 22px 12px 24px 0; }
+	#access-ledger .al-header { flex-direction: column; gap: 16px; padding-bottom: 22px; }
+	#access-ledger .al-actions { flex-direction: row; }
+	#access-ledger .al-panel { padding: 21px 19px; }
+	#access-ledger .al-stat { padding: 17px; }
+	#access-ledger .al-stats { gap: 10px; }
+	#access-ledger .al-stat strong { font-size: 33px; }
+	#access-ledger .al-filters { grid-template-columns: 1fr 1fr; }
+	#access-ledger .al-search { grid-column: 1 / -1; }
+	#access-ledger .al-permissions { grid-template-columns: 1fr; }
+	#access-ledger .al-button { min-height: 44px; }
+	#access-ledger :is(input[type="text"], input[type="search"], select) { font-size: 16px; min-height: 44px; }
+	#access-ledger .al-table, #access-ledger .al-table tbody { display: block; }
+	#access-ledger .al-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+	#access-ledger .al-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 18px 0; border-top: 1px solid var(--al-line); }
+	#access-ledger .al-table td, #access-ledger .al-table td:first-child, #access-ledger .al-table td:last-child { display: block; border: 0; padding: 0; width: auto; text-align: start; }
+	#access-ledger .al-table td::before { content: attr(data-label); display: block; font-size: 10px; color: var(--al-muted); margin-bottom: 4px; }
+	#access-ledger .al-table td:last-child { align-self: end; }
+	#access-ledger .al-footer { flex-direction: column; gap: 5px; }
+}
+@media (max-width: 480px) {
+	#access-ledger .al-stats { grid-template-columns: 1fr; gap: 8px; }
+	#access-ledger .al-stat { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; }
+	#access-ledger .al-stat strong { grid-column: 2; grid-row: 1 / 3; margin: 0; }
+	#access-ledger .al-stat .al-muted { grid-column: 1; }
+	#access-ledger .al-filters { grid-template-columns: 1fr; }
+	#access-ledger .al-section-head { flex-wrap: wrap; }
+	#access-ledger .al-inline-form { align-items: stretch; }
+	#access-ledger .al-inline-form .al-field { flex-basis: 100%; }
+	#access-ledger .al-inline-form .al-button { flex: 1; }
+	#access-ledger .al-data { grid-template-columns: 1fr; }
+	#access-ledger .al-order-summary a { margin-inline-start: 0; }
+	#access-ledger .al-dialog { padding: 19px; }
+	#access-ledger .al-dialog-head .al-eyebrow { max-width: 170px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	#access-ledger *, #access-ledger *::before, #access-ledger *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+	#access-ledger progress:indeterminate { appearance: none; background: #dcebe5; }
+	#access-ledger progress:indeterminate::-webkit-progress-bar { background: #dcebe5; }
+}
+@media (forced-colors: active) {
+	#access-ledger .al-button, #access-ledger .al-badge, #access-ledger .al-issue, #access-ledger .al-panel { border-color: CanvasText; }
+	#access-ledger :focus-visible { outline-color: Highlight; }
+}

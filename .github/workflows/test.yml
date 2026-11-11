@@ -1,0 +1,51 @@
+name: Integration tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  wordpress:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {php: '7.4', wp: '6.8.3', wc: '10.0.4', hpos: 'no'}
+          - {php: '8.3', wp: '7.1.4', wc: '11.3.0', hpos: 'no'}
+          - {php: '8.3', wp: '7.1.4', wc: '11.3.0', hpos: 'yes'}
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: wordpress
+          MYSQL_DATABASE: access_ledger_tests
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -pwordpress" --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          tools: wp-cli
+          extensions: mysqli
+      - name: Syntax
+        run: |
+          find . -name '*.php' -print0 | xargs -0 -n1 php -l
+          node --check assets/admin.js
+      - name: Disposable WordPress
+        env:
+          WP_VERSION: '${{ matrix.wp }}'
+          WC_VERSION: '${{ matrix.wc }}'
+          HPOS: '${{ matrix.hpos }}'
+        run: |
+          mkdir /tmp/al-wordpress
+          wp core download --version="$WP_VERSION" --path=/tmp/al-wordpress
+          cd /tmp/al-wordpress
+          wp config create --dbname=access_ledger_tests --dbuser=root --dbpass=wordpress --dbhost=127.0.0.1:3306
+          wp config set ACCESS_LEDGER_TESTS true --raw
+          wp core install --url=http://localhost --title=Tests --admin_user=admin --admin_password=temporary-local-test --admin_email=admin@example.test --skip-email
+          wp plugin install woocommerce --version="$WC_VERSION" --activate
+          wp option update woocommerce_custom_orders_table_enabled "$HPOS"
+          ln -s "$GITHUB_WORKSPACE" wp-content/plugins/access-ledger
+          wp plugin activate access-ledger
+          wp eval-file "$GITHUB_WORKSPACE/tests/integration.php"
+          bash "$GITHUB_WORKSPACE/tests/concurrency.sh"
