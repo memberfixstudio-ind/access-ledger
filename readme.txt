@@ -3,7 +3,7 @@ Contributors: memberfixstudio-ind
 Tags: woocommerce, downloads, support, audit, permissions
 Requires at least: 6.8
 Tested up to: 7.1
-Requires PHP: 7.4
+Requires PHP: 8.2
 Requires Plugins: woocommerce
 Stable tag: 1.0.0
 License: GPLv2 or later

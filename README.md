@@ -30,7 +30,7 @@ No hosted service, subscription, tracking, customer messages or remote API calls
 2. In WordPress, select **Plugins → Add New → Upload Plugin** and activate it.
 3. Open **WooCommerce → Access Ledger**. Start with an order ID or a recent-order scan.
 
-Requires WordPress 6.8+, PHP 7.4+, WooCommerce 10+ and InnoDB tables for corrections. Both legacy and High-Performance Order Storage use WooCommerce's order APIs. Supported and actually tested combinations are recorded in [validation](docs/VALIDATION.md).
+Requires WordPress 6.8+, PHP 8.2+, WooCommerce 10+ and InnoDB tables for corrections. Both legacy and High-Performance Order Storage use WooCommerce's order APIs. Supported and actually tested combinations are recorded in [validation](docs/VALIDATION.md).
 
 ![Email correction preview on a disposable test store](docs/preview.png)
 

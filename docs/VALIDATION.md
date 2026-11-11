@@ -1,6 +1,6 @@
 # Validation record
 
-Release candidate 1.0.0, checked 12 November 2026. All fixtures use disposable stores and reserved example.test email addresses. No client data was used.
+Release 1.0.0, checked 12 November 2026. All fixtures use disposable stores and reserved example.test email addresses. No client data was used.
 
 ## Executed locally
 
@@ -9,6 +9,8 @@ Release candidate 1.0.0, checked 12 November 2026. All fixtures use disposable s
 | WordPress 7.1.4, WooCommerce 11.3.0, PHP 8.2.29, MySQL 8.0.35, legacy order storage | 197 assertions passed |
 | Same versions, separate database with HPOS enabled before creating fixtures | 197 assertions passed |
 | WordPress 7.1.4, WooCommerce 11.3.0, PHP 8.3.36, MySQL 8.0.35, HPOS | 199 assertions passed (includes two additional database-read failure checks) |
+| WordPress 6.8.3, WooCommerce 10.0.4, PHP 8.2.29, MySQL 8.0.35, legacy order storage | 199 assertions passed |
+| Installable ZIP in a separate HPOS site | Activation and dashboard smoke check passed |
 | Two independent PHP processes sharing MySQL, legacy and HPOS | Correction held its transaction while another process attempted download consumption. Email, remaining allowance and count were all preserved. |
 | Chrome, actual WordPress admin and REST API | Preview, exact-email confirmation, correction, guarded undo, nonce denial, scan, JSON export, search and mobile layout exercised |
 | Native WooCommerce download handler | Actual fixture file: mismatched email returned HTTP 403; correction returned HTTP 200 with exact file contents; undo returned HTTP 403 |
@@ -32,7 +34,8 @@ To exercise the browser and a real download, run `wp eval-file /path/to/access-l
 
 ## Scope and remaining validation
 
-- GitHub Actions runs minimum-version and current-version combinations on every push; its badge reflects the actual latest result.
+- The GitHub Actions matrix is configured for baseline and current-version combinations on every push. The initial hosted run remained queued before any jobs were assigned during this release session. **Local results above are the release evidence; a queued CI badge is not a passing CI result.** Check [Actions](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml) for its current status.
+- The release requires PHP 8.2+. PHP 7.4/8.1 compatibility is not advertised because those runtimes were not exercised.
 - This is an integration-tested first release, not evidence of long-running deployment across hosting providers or every WooCommerce extension.
 - No paid MemberPress, LearnDash, subscriptions or CRM integration is advertised or tested.
 - No large-store throughput benchmark, external penetration test, or screen-reader study has been performed. Keyboard controls, native dialogs, text alternatives and a 390px layout are included; browser tests check mobile page overflow and runtime errors.

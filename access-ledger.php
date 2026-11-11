@@ -4,7 +4,7 @@
  * Description: Explain digital-download access problems and preview history-preserving email corrections.
  * Version: 1.0.0
  * Requires at least: 6.8
- * Requires PHP: 7.4
+ * Requires PHP: 8.2
  * Requires Plugins: woocommerce
  * Author: Rohan Salave
  * Author URI: https://www.linkedin.com/in/rohan-salave-362475189/
