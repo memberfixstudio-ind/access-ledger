@@ -20,7 +20,7 @@ New reporting checks cover page boundaries, retries, inserts/deletes, stale and 
 
 All PHP and JavaScript syntax checks and `git diff --check` passed. A separate CSV self-check covered formula prefixes, leading controls/Unicode whitespace, commas, quotes, backslashes, multiline and nested JSON fields, plus empty output. This serializer check was not a database test.
 
-Outbound mail and external HTTP were blocked on the disposable sites. These are local results; hosted GitHub Actions remained queued at release time and is not reported as passing.
+Outbound mail and external HTTP were blocked on the disposable sites. The initial hosted queue cleared after publication. [GitHub Actions run 43465195677](https://github.com/memberfixstudio-ind/access-ledger/actions/runs/43465195677) passed on the release code in all three configured MySQL 8 environments: PHP 8.2/WP 6.8.3/Woo 10.0.4 legacy, PHP 8.3/WP 7.1.4/Woo 11.3.0 legacy, and the same current versions with HPOS. Local browser evidence remains separate from those hosted CLI checks.
 
 ## 1.0.0 historical checks — 12 November 2026
 
@@ -56,7 +56,7 @@ To exercise the browser and a real download, run `wp eval-file /path/to/access-l
 
 ## Scope and remaining validation
 
-- The GitHub Actions matrix is configured for baseline and current-version combinations on every push. The initial hosted run remained queued before any jobs were assigned during this release session. **Local results above are the release evidence; a queued CI badge is not a passing CI result.** Check [Actions](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml) for its current status.
+- The GitHub Actions matrix is configured for baseline and current-version combinations on every push. The initial 1.0.0 runs remained queued during that earlier release session. **The 1.1.0 release-code run passed all three jobs**, as linked above. Check [Actions](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml) for its current status.
 - The release requires PHP 8.2+. PHP 7.4/8.1 compatibility is not advertised because those runtimes were not exercised.
 - This is an integration-tested first release, not evidence of long-running deployment across hosting providers or every WooCommerce extension.
 - No paid MemberPress, LearnDash, subscriptions or CRM integration is advertised or tested.
