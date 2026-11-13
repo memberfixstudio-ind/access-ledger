@@ -96,4 +96,5 @@ $dash = Store::dashboard();
 al_check( ( $dash['scan']['processed'] ?? 0 ) >= 5, 'Scan processes real WooCommerce orders' );
 al_check( count( $dash['reports'] ) > 0, 'Scan persists reports' );
 require __DIR__ . '/adversarial.php';
+require __DIR__ . '/reporting.php';
 echo "ACCESS_LEDGER_TEST_RESULT: {$passed} passed; WP " . get_bloginfo( 'version' ) . '; WC ' . WC_VERSION . '; PHP ' . PHP_VERSION . "\n";

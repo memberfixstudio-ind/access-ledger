@@ -11,6 +11,10 @@
 	let scanBusy = false;
 	let pollingPaused = false;
 	let dashboardSequence = 0;
+	let reportsSequence = 0;
+	let reportsBusy = false;
+	let reportsExpanded = false;
+	let exportBusy = false;
 	let orderSequence = 0;
 	let currentOrder = null;
 	let orderTrigger = null;
@@ -65,8 +69,8 @@
 	function clearError() { $('error').hidden = true; $('error').textContent = ''; }
 	function notify(text) { $('notice').textContent = text; }
 	function announce(text) { $('announcement').textContent = text; }
-	function api(path, method = 'GET', data) {
-		return window.wp.apiFetch({ url: config.root + path, method, data, headers: { 'X-WP-Nonce': config.nonce } });
+	function api(path, method = 'GET', data, parse = true) {
+		return window.wp.apiFetch({ path: '/access-ledger/v1/' + path, method, data, parse, headers: { 'X-WP-Nonce': config.nonce } });
 	}
 	function empty(title, detail) {
 		const node = el('div', 'al-empty');
@@ -129,18 +133,22 @@
 			const haystack = [report.order_id, report.order_number, report.customer_email, ...(report.permissions || []).map((p) => p.product_name)].join(' ').toLocaleLowerCase();
 			return (!query || haystack.includes(query)) && (type === 'all' || issues.some((i) => i.code === type)) && ($('filter').value !== 'repairable' || issues.some(repairable));
 		});
-		$('report-count').textContent = sprintf(__('%1$s of %2$s saved orders', 'access-ledger'), count(reports.length), count(dashboard.reports.length));
+		$('report-count').textContent = sprintf(__('%1$s matching / %2$s loaded orders', 'access-ledger'), count(reports.length), count(dashboard.reports.length));
+		$('load-older').hidden = !dashboard.pagination.has_more;
+		$('load-older').disabled = reportsBusy || scanBusy;
+		$('load-older').textContent = reportsBusy ? __('Loading…', 'access-ledger') : __('Load older findings', 'access-ledger');
+		$('older-status').textContent = dashboard.pagination.has_more ? __('Older findings are available. Search and filters cover only loaded orders.', 'access-ledger') : __('No older findings in this view. Refresh to check for newer saved findings.', 'access-ledger');
 		const target = $('reports-content');
-		target.setAttribute('aria-busy', 'false');
+		target.setAttribute('aria-busy', String(reportsBusy));
 		if (!reports.length) {
 			target.replaceChildren(empty(
 				dashboard.reports.length ? __('No matching orders', 'access-ledger') : __('No saved findings', 'access-ledger'),
-				dashboard.reports.length ? __('Try a different search or filter.', 'access-ledger') : dashboard.scan ? __('No issue reports are saved for this scan so far. Orders without findings are not listed. Use a live order check for current details.', 'access-ledger') : __('Run a scan to collect orders that need review. You can also check one order now.', 'access-ledger')
+				dashboard.reports.length ? __('Try another search or filter, or load older findings if available.', 'access-ledger') : dashboard.scan ? __('No issue reports are saved for this scan so far. Orders without findings are not listed. Use a live order check for current details.', 'access-ledger') : __('Run a scan to collect orders that need review. You can also check one order now.', 'access-ledger')
 			));
 			return;
 		}
 		const labels = [__('Order', 'access-ledger'), __('Customer', 'access-ledger'), __('Findings', 'access-ledger'), __('Checked', 'access-ledger'), __('Action', 'access-ledger')];
-		const node = table(labels, __('Latest orders with findings; saved snapshots from the last scan.', 'access-ledger'));
+		const node = table(labels, __('Loaded orders with findings; saved snapshots from one scan.', 'access-ledger'));
 		reports.forEach((report) => {
 			const row = el('tr');
 			cell(row, labels[0], el('span', 'al-order-number', '#' + report.order_number)).append(el('span', 'al-cell-sub', report.status));
@@ -180,20 +188,67 @@
 		});
 		target.replaceChildren(node);
 	}
-	async function refreshDashboard() {
+	async function refreshDashboard(resetReports = false) {
 		const sequence = ++dashboardSequence;
 		const result = await api('dashboard');
 		if (sequence !== dashboardSequence) return;
-		if (!result || !Array.isArray(result.reports) || !Array.isArray(result.audits) || !result.totals) throw new Error(__('The dashboard response was incomplete. Refresh to try again.', 'access-ledger'));
+		if (!result || !Array.isArray(result.reports) || !Array.isArray(result.audits) || !result.totals || !result.pagination || result.pagination.scan_id !== (result.scan?.id ?? null)) throw new Error(__('The dashboard response was incomplete. Refresh to try again.', 'access-ledger'));
 		const previousStatus = dashboard?.scan?.status;
+		const scanChanged = dashboard?.pagination.scan_id !== result.pagination.scan_id;
+		const replaceReports = resetReports || scanChanged || !reportsExpanded;
+		if (!replaceReports) {
+			result.reports = dashboard.reports;
+			result.pagination = dashboard.pagination;
+		} else {
+			reportsSequence++;
+			reportsBusy = false;
+			reportsExpanded = false;
+		}
 		dashboard = result;
 		['orders', 'issues', 'repairable'].forEach((key) => { $('total-' + key).textContent = count(result.totals[key]); });
-		$('export').disabled = false;
+		['export', 'export-csv'].forEach((id) => { $(id).disabled = exportBusy; });
 		renderScan();
-		if (!$('reports-content').contains(document.activeElement)) renderReports();
+		if (resetReports || scanChanged || !$('reports-content').contains(document.activeElement)) renderReports();
 		if (!$('history-content').contains(document.activeElement)) renderHistory();
 		if (previousStatus === 'running' && !running()) announce(__('The scan has stopped. The saved findings are updated.', 'access-ledger'));
 		scheduleScan();
+	}
+	async function loadOlder() {
+		if (!dashboard?.pagination.has_more || reportsBusy || scanBusy) return;
+		const { scan_id, next_before_id } = dashboard.pagination;
+		const sequence = ++reportsSequence;
+		reportsBusy = true;
+		reportsExpanded = true;
+		clearError();
+		renderReports();
+		try {
+			const page = await api('reports?' + new URLSearchParams({ scan_id, before_id: next_before_id }));
+			if (sequence !== reportsSequence || dashboard.pagination.scan_id !== scan_id) return;
+			if (page?.scan_id !== scan_id || !Array.isArray(page.reports) || page.reports.length > 50 || typeof page.has_more !== 'boolean' || (page.has_more && (!Number.isSafeInteger(page.next_before_id) || page.next_before_id < 1 || page.next_before_id >= next_before_id))) throw new Error(__('The findings response was incomplete. Refresh to try again.', 'access-ledger'));
+			const loaded = new Set(dashboard.reports.map((report) => report.order_id));
+			dashboard.reports.push(...page.reports.filter((report) => !loaded.has(report.order_id)));
+			dashboard.pagination = { scan_id, has_more: page.has_more, next_before_id: page.next_before_id };
+			announce(sprintf(_n('%s older order loaded.', '%s older orders loaded.', page.reports.length, 'access-ledger'), count(page.reports.length)));
+		} catch (error) {
+			if (sequence !== reportsSequence) return;
+			if (error.code === 'access_ledger_scan_changed') {
+				dashboard.reports = [];
+				dashboard.pagination.has_more = false;
+				dashboard.pagination.next_before_id = null;
+				renderReports();
+				try {
+					await refreshDashboard(true);
+					notify(__('The latest scan changed. Its first page is loaded; findings from the previous scan were discarded.', 'access-ledger'));
+				} catch (refreshError) { showError(refreshError); }
+			} else showError(error);
+		} finally {
+			if (sequence === reportsSequence) {
+				reportsBusy = false;
+				const hadFocus = document.activeElement === $('load-older');
+				renderReports();
+				if (hadFocus && $('load-older').hidden) $('report-count').focus();
+			}
+		}
 	}
 	function scheduleScan() {
 		clearTimeout(scanTimer);
@@ -211,6 +266,7 @@
 		clearTimeout(scanTimer);
 		clearError();
 		renderScan();
+		renderReports();
 		try {
 			if (scanStep) await scanStep.catch(() => {});
 			await api(path, 'POST', data);
@@ -218,7 +274,7 @@
 			await refreshDashboard();
 			announce(path === 'scan/cancel' ? __('Scan cancelled. Findings already saved remain available.', 'access-ledger') : __('Scan started. Customer access is unchanged.', 'access-ledger'));
 		} catch (error) { showError(error); }
-		finally { scanBusy = false; renderScan(); scheduleScan(); }
+		finally { scanBusy = false; renderScan(); renderReports(); scheduleScan(); }
 	}
 	function datum(list, label, value, wide) {
 		const group = el('div', wide ? 'al-data-wide' : '');
@@ -450,34 +506,46 @@
 	});
 	Object.entries(issueNames).forEach(([value, label]) => { const option = el('option', '', label); option.value = value; $('issue-filter').append(option); });
 	$('search').addEventListener('input', renderReports);
+	$('load-older').addEventListener('click', loadOlder);
 	['filter', 'issue-filter'].forEach((id) => $(id).addEventListener('change', () => { renderReports(); announce($('report-count').textContent); }));
 	$('refresh').addEventListener('click', async () => {
 		$('refresh').disabled = true;
 		clearError();
 		pollingPaused = false;
-		try { await refreshDashboard(); announce(__('Dashboard refreshed. Saved checks are still snapshots from the last scan.', 'access-ledger')); }
+		try { await refreshDashboard(true); announce(__('Dashboard refreshed to the latest 50 saved findings. Search and filters cover loaded orders only.', 'access-ledger')); }
 		catch (error) { showError(error); }
 		finally { $('refresh').disabled = false; }
 	});
-	$('export').addEventListener('click', async () => {
-		$('export').disabled = true;
-		$('export').textContent = __('Preparing export…', 'access-ledger');
+	['json', 'csv'].forEach((format) => $(format === 'json' ? 'export' : 'export-csv').addEventListener('click', async () => {
+		if (exportBusy) return;
+		exportBusy = true;
+		['export', 'export-csv'].forEach((id) => { $(id).disabled = true; });
 		clearError();
 		try {
-			const result = await api('export');
-			if (!result || !Array.isArray(result.reports)) throw new Error(__('The export response was incomplete. Please try again.', 'access-ledger'));
-			const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json;charset=utf-8' }));
+			let blob, total;
+			if (format === 'csv') {
+				const response = await api('export?format=csv', 'GET', undefined, false);
+				if (!response.ok || !response.headers.get('Content-Type')?.startsWith('text/csv')) throw new Error(__('The export response was incomplete. Please try again.', 'access-ledger'));
+				total = Number(response.headers.get('X-Access-Ledger-Report-Count'));
+				blob = await response.blob();
+			} else {
+				const result = await api('export');
+				if (!result || !Array.isArray(result.reports)) throw new Error(__('The export response was incomplete. Please try again.', 'access-ledger'));
+				total = result.reports.length;
+				blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json;charset=utf-8' });
+			}
+			const url = URL.createObjectURL(blob);
 			const link = el('a');
 			link.href = url;
-			link.download = 'product-access-ledger-' + new Date().toISOString().slice(0, 10) + '.json';
+			link.download = 'product-access-ledger-' + new Date().toISOString().slice(0, 10) + '.' + format;
 			root.append(link);
 			link.click();
 			link.remove();
 			setTimeout(() => URL.revokeObjectURL(url), 1000);
-			notify(sprintf(_n('JSON export prepared with %s saved report.', 'JSON export prepared with %s saved reports.', result.reports.length, 'access-ledger'), count(result.reports.length)));
+			notify(sprintf(__('%1$s export prepared with %2$s saved reports (latest scan, maximum 1,000; filters do not apply).', 'access-ledger'), format.toUpperCase(), count(total)));
 		} catch (error) { showError(error); }
-		finally { $('export').disabled = false; $('export').textContent = __('Export JSON', 'access-ledger'); }
-	});
+		finally { exportBusy = false; ['export', 'export-csv'].forEach((id) => { $(id).disabled = false; }); }
+	}));
 	document.addEventListener('visibilitychange', () => {
 		if (document.hidden) clearTimeout(scanTimer);
 		else refreshDashboard().catch(showError);

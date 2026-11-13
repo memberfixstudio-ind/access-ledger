@@ -1,8 +1,30 @@
 # Validation record
 
-Release 1.0.0, checked 12 November 2026. All fixtures use disposable stores and reserved example.test email addresses. No client data was used.
+All fixtures use disposable stores and reserved example.test email addresses. No client data was used.
 
-## Executed locally
+## 1.1.0 — 13 November 2026
+
+| Environment / check | Observed result |
+| --- | --- |
+| WordPress 6.8.3 · WooCommerce 10.0.4 · PHP 8.2.29 · MariaDB 13.0.2 · legacy orders | **356 assertions passed** |
+| WordPress 7.1.4 · WooCommerce 11.3.0 · PHP 8.3.36 · MariaDB 13.0.2 · legacy orders | **356 assertions passed** |
+| Installable ZIP on a fresh WordPress 7.1.4 / WooCommerce 11.3.0 / PHP 8.3.36 / MariaDB 13.0.2 site, HPOS enabled before fixtures | Activation succeeded; **356 assertions passed** against the extracted runtime |
+| Two independent PHP processes, current legacy runtime | Correction completed while another process attempted download consumption; final email, remaining allowance (4) and count (1) preserved |
+| Chrome, actual admin and WooCommerce download handler | Native file request returned **403 → 200 → 403** before correction, after correction and after undo; successful response matched the fixture file exactly |
+| Chrome, reporting UI with plain permalinks | Scan, bounded older findings, loaded search/filters, same-scan background refresh, explicit refresh, stale-scan recovery and CSV/JSON downloads passed |
+| Browser authorization and mobile layout | Cookie requests without REST nonces returned 401/403; no JavaScript runtime errors; no horizontal page overflow at 390px |
+
+Each integration run includes **37 base, 162 adversarial and 157 reporting assertions**. The reporting suite uses 105 synthetic saved snapshots for cursor boundaries and 1,005 for the export cap; those are not 1,005 separately created orders. The browser fixture creates 55 additional real WooCommerce orders to exercise findings beyond the first 50.
+
+New reporting checks cover page boundaries, retries, inserts/deletes, stale and mid-read scan changes, authorization, strict arguments, raw CSV serving, formula-prefix escaping and database read failures. Pagination and export leave permissions and correction audits unchanged. The shared request helper uses WordPress's root-URL middleware so pagination and CSV queries work with plain and pretty permalinks; eight direct middleware checks covered root/subdirectory URLs.
+
+All PHP and JavaScript syntax checks and `git diff --check` passed. A separate CSV self-check covered formula prefixes, leading controls/Unicode whitespace, commas, quotes, backslashes, multiline and nested JSON fields, plus empty output. This serializer check was not a database test.
+
+Outbound mail and external HTTP were blocked on the disposable sites. These are local results; hosted GitHub Actions remained queued at release time and is not reported as passing.
+
+## 1.0.0 historical checks — 12 November 2026
+
+### Executed locally
 
 | Environment | Result |
 |---|---|

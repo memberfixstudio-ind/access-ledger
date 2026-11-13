@@ -54,6 +54,7 @@ final class Admin {
 				<div class="al-actions">
 					<button class="al-button al-button-quiet" id="al-refresh" type="button"><?php esc_html_e( 'Refresh', 'access-ledger' ); ?></button>
 					<button class="al-button" id="al-export" type="button" disabled><?php esc_html_e( 'Export JSON', 'access-ledger' ); ?></button>
+					<button class="al-button" id="al-export-csv" type="button" disabled><?php esc_html_e( 'Export CSV', 'access-ledger' ); ?></button>
 				</div>
 			</header>
 			<noscript><p class="al-notice"><?php esc_html_e( 'Enable JavaScript to review orders and run access checks. No customer access has been changed.', 'access-ledger' ); ?></p></noscript>
@@ -100,15 +101,16 @@ final class Admin {
 			</section>
 
 			<section class="al-panel al-reports" aria-labelledby="al-reports-heading">
-				<div class="al-section-head"><div><p class="al-eyebrow"><?php esc_html_e( 'The access record', 'access-ledger' ); ?></p><h2 id="al-reports-heading"><?php esc_html_e( 'Orders with findings', 'access-ledger' ); ?></h2></div><span id="al-report-count" class="al-meta"></span></div>
+				<div class="al-section-head"><div><p class="al-eyebrow"><?php esc_html_e( 'The access record', 'access-ledger' ); ?></p><h2 id="al-reports-heading"><?php esc_html_e( 'Orders with findings', 'access-ledger' ); ?></h2></div><span id="al-report-count" class="al-meta" tabindex="-1"></span></div>
 				<p class="al-context"><?php esc_html_e( 'A missing permission may have been intentionally revoked. It is reported for review and will never be recreated here. Newly added files are not automatically owed to earlier purchasers.', 'access-ledger' ); ?></p>
 				<div class="al-filters">
-					<div class="al-field al-search"><label for="al-search"><?php esc_html_e( 'Search saved checks', 'access-ledger' ); ?></label><input type="search" id="al-search" name="search" autocomplete="off" placeholder="<?php esc_attr_e( 'Order, email or product', 'access-ledger' ); ?>" aria-describedby="al-report-scope"></div>
+					<div class="al-field al-search"><label for="al-search"><?php esc_html_e( 'Search loaded checks', 'access-ledger' ); ?></label><input type="search" id="al-search" name="search" autocomplete="off" placeholder="<?php esc_attr_e( 'Order, email or product', 'access-ledger' ); ?>" aria-describedby="al-report-scope"></div>
 					<div class="al-field"><label for="al-filter"><?php esc_html_e( 'Show orders', 'access-ledger' ); ?></label><select id="al-filter"><option value="all"><?php esc_html_e( 'All orders with findings', 'access-ledger' ); ?></option><option value="repairable"><?php esc_html_e( 'Email fix available', 'access-ledger' ); ?></option></select></div>
 					<div class="al-field"><label for="al-issue-filter"><?php esc_html_e( 'Finding type', 'access-ledger' ); ?></label><select id="al-issue-filter"><option value="all"><?php esc_html_e( 'All findings', 'access-ledger' ); ?></option></select></div>
 				</div>
-				<p id="al-report-scope" class="al-meta"><?php esc_html_e( 'The latest 50 orders with findings from the last scan. These snapshots stay unchanged until a new scan; open an order for a live check. Export includes up to 1,000 saved reports and does not use these filters.', 'access-ledger' ); ?></p>
+				<p id="al-report-scope" class="al-meta"><?php esc_html_e( 'Starts with the latest 50 orders with findings. Load older findings adds up to 50 at a time from the same scan. Search and filters cover loaded orders only. Refresh resets this view to the latest page. Open an order for a live check. JSON and CSV exports include up to 1,000 reports from the latest scan, regardless of loaded pages or filters.', 'access-ledger' ); ?></p>
 				<div id="al-reports-content" aria-busy="true"><p class="al-empty"><?php esc_html_e( 'Loading saved checks…', 'access-ledger' ); ?></p></div>
+				<div class="al-inline-form"><button class="al-button" id="al-load-older" type="button" aria-controls="al-reports-content" aria-describedby="al-older-status" hidden><?php esc_html_e( 'Load older findings', 'access-ledger' ); ?></button><p id="al-older-status" class="al-meta"></p></div>
 			</section>
 
 			<section class="al-panel" aria-labelledby="al-history-heading">

@@ -25,6 +25,7 @@ class Store {
             report longtext NOT NULL,
             PRIMARY KEY  (id),
             UNIQUE KEY scan_order (scan_id,order_id),
+            KEY scan_id_id (scan_id,id),
             KEY checked_at (checked_at)
         ) ENGINE=InnoDB $charset;" );
         dbDelta( "CREATE TABLE {$wpdb->prefix}access_ledger_audits (
@@ -333,31 +334,69 @@ class Store {
         return false === $ok ? self::error( __( 'Could not save a report.', 'access-ledger' ), 500 ) : true;
     }
 
-    public static function reports( $limit = 50 ) {
-        global $wpdb;
-        $state = self::state();
-        if ( ! $state ) { return array(); }
-        $rows = $wpdb->get_col( $wpdb->prepare(
-            "SELECT report FROM {$wpdb->prefix}access_ledger_reports WHERE scan_id = %s AND checked_at >= %s ORDER BY id DESC LIMIT %d",
-            $state['id'], gmdate( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS ), max( 1, min( 1000, (int) $limit ) )
-        ) );
-        $reports = array();
-        foreach ( $rows as $json ) {
-            $report = json_decode( $json, true );
-            if ( is_array( $report ) ) { $reports[] = self::public_report( $report ); }
+    private static function same_scan( $scan_id ) {
+        if ( ( self::state()['id'] ?? null ) !== $scan_id ) {
+            return new \WP_Error( 'access_ledger_scan_changed', __( 'The latest scan changed. Refresh the findings before loading more.', 'access-ledger' ), array( 'status' => 409 ) );
         }
-        return $reports;
+        return true;
+    }
+
+    private static function report_rows( $scan_id, $limit, $before_id = 0 ) {
+        global $wpdb;
+        if ( null === $scan_id ) { return array(); }
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT id, report FROM {$wpdb->prefix}access_ledger_reports WHERE scan_id = %s AND checked_at >= %s"
+                . ( $before_id ? $wpdb->prepare( ' AND id < %d', $before_id ) : '' ) . ' ORDER BY id DESC LIMIT %d',
+            $scan_id, gmdate( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS ), max( 1, min( 1000, (int) $limit ) )
+        ), ARRAY_A );
+        if ( $wpdb->last_error ) { return self::error( __( 'Saved findings could not be read. Please retry.', 'access-ledger' ), 500 ); }
+        foreach ( $rows as &$row ) {
+            $report = json_decode( $row['report'], true );
+            if ( ! is_array( $report ) ) { return self::error( __( 'A saved finding could not be decoded.', 'access-ledger' ), 500 ); }
+            $row['report'] = self::public_report( $report );
+        }
+        return $rows;
+    }
+
+    public static function report_page( $scan_id, $before_id = 0 ) {
+        $valid = self::same_scan( $scan_id );
+        if ( is_wp_error( $valid ) ) { return $valid; }
+        $rows = self::report_rows( $scan_id, 51, $before_id );
+        if ( is_wp_error( $rows ) ) { return $rows; }
+        $valid = self::same_scan( $scan_id );
+        if ( is_wp_error( $valid ) ) { return $valid; }
+        $has_more = count( $rows ) > 50;
+        if ( $has_more ) { array_pop( $rows ); }
+        return array(
+            'scan_id' => $scan_id, 'reports' => array_column( $rows, 'report' ),
+            'has_more' => $has_more, 'next_before_id' => $has_more ? (int) end( $rows )['id'] : null,
+        );
+    }
+
+    public static function reports( $limit = 50 ) {
+        $scan_id = self::state()['id'] ?? null;
+        $rows = self::report_rows( $scan_id, $limit );
+        if ( is_wp_error( $rows ) ) { return $rows; }
+        $valid = self::same_scan( $scan_id );
+        return is_wp_error( $valid ) ? $valid : array_column( $rows, 'report' );
     }
 
     public static function dashboard() {
         global $wpdb;
         $state = self::state();
+        $page = self::report_page( $state['id'] ?? null );
+        if ( is_wp_error( $page ) ) { return $page; }
         $counts = $state ? $wpdb->get_row( $wpdb->prepare(
             "SELECT COALESCE(SUM(issue_count), 0) AS issues, COALESCE(SUM(repairable_count), 0) AS repairable FROM {$wpdb->prefix}access_ledger_reports WHERE scan_id = %s AND checked_at >= %s",
             $state['id'], gmdate( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS )
         ), ARRAY_A ) : array();
+        if ( $state && $wpdb->last_error ) { return self::error( __( 'Saved finding totals could not be read. Please retry.', 'access-ledger' ), 500 ); }
+        $valid = self::same_scan( $state['id'] ?? null );
+        if ( is_wp_error( $valid ) ) { return $valid; }
+        $reports = $page['reports'];
+        unset( $page['reports'] );
         return array(
-            'scan' => $state, 'reports' => self::reports(), 'audits' => self::audits(),
+            'scan' => $state, 'reports' => $reports, 'pagination' => $page, 'audits' => self::audits(),
             'totals' => array( 'orders' => $state ? (int) $state['processed'] : 0, 'issues' => (int) ( $counts['issues'] ?? 0 ), 'repairable' => (int) ( $counts['repairable'] ?? 0 ) ),
         );
     }

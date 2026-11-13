@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Access Ledger for WooCommerce
  * Description: Explain digital-download access problems and preview history-preserving email corrections.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires at least: 6.8
  * Requires PHP: 8.2
  * Requires Plugins: woocommerce
@@ -12,7 +12,7 @@
  * Text Domain: access-ledger
  */
 defined( 'ABSPATH' ) || exit;
-define( 'ACCESS_LEDGER_VERSION', '1.0.0' );
+define( 'ACCESS_LEDGER_VERSION', '1.1.0' );
 define( 'ACCESS_LEDGER_FILE', __FILE__ );
 foreach ( array( 'store', 'engine', 'api', 'admin' ) as $class ) {
     require_once __DIR__ . '/includes/class-' . $class . '.php';

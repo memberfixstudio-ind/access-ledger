@@ -6,6 +6,8 @@
 
 A support workspace for digital-product stores. Inspect one order or scan recent orders, read the evidence behind each finding, and preview a narrowly verified email correction that keeps download allowances and history intact.
 
+Version **1.1.0** adds older-findings pagination and CSV export. See the [changelog](CHANGELOG.md) and [API contract](docs/CONTRACT.md).
+
 ![Access Ledger dashboard](docs/dashboard.png)
 
 ## The problem
@@ -18,7 +20,8 @@ Access Ledger separates **observed mismatches**, **expected restrictions** and *
 
 - **Investigate an order:** see order eligibility, current file permissions, remaining downloads, expiry, identity differences and duplicate records.
 - **Scan recent purchases:** resumable, bounded batches with progress and cancellation; choose up to 365 days. Stored observations carry timestamps.
-- **Triage findings:** search and filter the latest checks; export up to 1,000 reports as JSON for your support workflow.
+- **Triage findings:** start with the latest 50 saved orders, then **Load older findings** in pages of up to 50 from the same scan. Search and filters cover loaded findings only. Refresh resets to the latest page; a new scan discards the previous scan's loaded results.
+- **Export evidence:** download JSON or CSV on demand, using the same newest 1,000 reports at most from the latest scan. Loaded pages and UI filters do not change the export. CSV has one row per report, with full findings and permissions in JSON cells; formula-like cells receive a leading apostrophe.
 - **Preview an email correction:** compare before and after. Corrections are offered only when the permission and order already belong to the same registered account, the order key matches, and the account email matches the order billing email.
 - **Keep an audit trail and undo:** corrections record the operator and timestamp; undo refuses to overwrite changed order/permission identity.
 
@@ -54,7 +57,7 @@ An email correction can invalidate links containing the old email. The customer 
 
 ## Privacy and security
 
-Only users with `manage_woocommerce` can use the UI or API. WordPress cookie authentication requires a REST nonce for writes. No unauthenticated webhook or public endpoint is installed. Reports contain customer emails; treat exports as customer records. Order keys, usable download links and file URLs are excluded from reports and exports.
+Only users with `manage_woocommerce` can use the UI or API. WordPress cookie authentication requires a REST nonce, including for pagination and exports. No unauthenticated webhook or public endpoint is installed. Reports contain customer emails; treat exports as customer records. Order keys, usable download links and file URLs are excluded from reports and exports.
 
 Reports expire after 30 days and correction history after 90 days, with cleanup during scan operations and daily WP-Cron. Data remains local. Uninstall preserves evidence by default; to delete plugin-owned data on uninstall, set `define('ACCESS_LEDGER_DELETE_DATA', true);` in `wp-config.php` first. WooCommerce data is never deleted. See [security](SECURITY.md).
 

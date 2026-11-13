@@ -8,6 +8,7 @@ class API {
 
     public static function register() {
         add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
+        add_filter( 'rest_pre_serve_request', array( __CLASS__, 'serve_csv' ), 10, 3 );
     }
 
     public static function permission() {
@@ -36,8 +37,16 @@ class API {
 
     public static function routes() {
         $id = array( 'id' => self::integer_arg( PHP_INT_MAX ) );
+        $before_id = self::integer_arg( PHP_INT_MAX );
+        $before_id['required'] = false;
         $routes = array(
             '/dashboard' => array( 'GET', 'dashboard', array(), 'dashboard' ),
+            '/reports' => array( 'GET', 'reports', array(
+                'scan_id' => array( 'type' => 'string', 'required' => true, 'minLength' => 36, 'maxLength' => 36,
+                    'validate_callback' => function ( $value ) { return is_string( $value ) && 1 === preg_match( '/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/D', $value ); },
+                ),
+                'before_id' => $before_id,
+            ), 'reports' ),
             '/scan' => array( 'POST', 'scan_start', array( 'days' => self::integer_arg( 365, 30 ) ), 'scan' ),
             '/scan/step' => array( 'POST', 'scan_step', array(), 'scan' ),
             '/scan/cancel' => array( 'POST', 'scan_cancel', array(), 'scan' ),
@@ -48,7 +57,7 @@ class API {
                 'validate_callback' => function ( $value ) { return is_string( $value ) && strlen( $value ) <= 512 && 1 === preg_match( '/^[A-Za-z0-9._~=-]+$/D', $value ); },
             ) ), 'mutation' ),
             '/audits/(?P<id>[1-9][0-9]*)/undo' => array( 'POST', 'undo', $id, 'mutation' ),
-            '/export' => array( 'GET', 'export', array(), 'export' ),
+            '/export' => array( 'GET', 'export', array( 'format' => array( 'type' => 'string', 'enum' => array( 'json', 'csv' ), 'default' => 'json' ) ), 'export' ),
         );
         foreach ( $routes as $path => $route ) {
             list( $method, $callback, $args, $schema ) = $route;
@@ -69,6 +78,7 @@ class API {
     }
 
     public static function dashboard() { return self::response( Store::dashboard() ); }
+    public static function reports( $request ) { return self::response( Store::report_page( $request['scan_id'], (int) $request['before_id'] ) ); }
     public static function scan_start( $request ) { return self::response( Store::scan_start( $request['days'] ) ); }
     public static function scan_step() { return self::response( Store::scan_step() ); }
     public static function scan_cancel() { return self::response( Store::scan_cancel() ); }
@@ -104,8 +114,61 @@ class API {
         return self::response( Engine::undo( (int) $request['id'] ) );
     }
 
-    public static function export() {
-        return self::response( array( 'generated_at' => gmdate( 'c' ), 'reports' => Store::reports( 1000 ) ) );
+    public static function export( $request ) {
+        $reports = Store::reports( 1000 );
+        if ( is_wp_error( $reports ) ) { return $reports; }
+        if ( 'csv' !== $request['format'] ) {
+            return self::response( array( 'generated_at' => gmdate( 'c' ), 'reports' => $reports ) );
+        }
+        $csv = self::csv( $reports );
+        if ( is_wp_error( $csv ) ) { return $csv; }
+        $response = self::response( $csv );
+        $response->header( 'Content-Type', 'text/csv; charset=utf-8' );
+        $response->header( 'Content-Disposition', 'attachment; filename="access-ledger-' . gmdate( 'Y-m-d' ) . '.csv"' );
+        $response->header( 'X-Access-Ledger-Report-Count', (string) count( $reports ) );
+        return $response;
+    }
+
+    private static function csv( $reports ) {
+        $columns = array( 'order_id', 'order_number', 'status', 'paid', 'customer_id', 'customer_email', 'order_url', 'checked_at', 'issues', 'permissions' );
+        $stream = fopen( 'php://temp', 'w+' );
+        if ( false === $stream ) { return new \WP_Error( 'access_ledger_export', __( 'Could not prepare the export.', 'access-ledger' ), array( 'status' => 500 ) ); }
+        try {
+            if ( false === fputcsv( $stream, $columns, ',', '"', '', "\r\n" ) ) { throw new \RuntimeException( 'csv' ); }
+            foreach ( $reports as $report ) {
+                $cells = array();
+                foreach ( $columns as $column ) {
+                    $value = $report[ $column ] ?? '';
+                    if ( is_array( $value ) || is_bool( $value ) ) { $value = wp_json_encode( $value ); }
+                    if ( false === $value ) { throw new \RuntimeException( 'csv' ); }
+                    $value = (string) $value;
+                    // Prefix before any leading whitespace/control characters so spreadsheets cannot execute a formula.
+                    $cells[] = preg_match( '/^[\p{Z}\p{C}\s]*[=+\-@]/u', $value ) ? "'" . $value : $value;
+                }
+                if ( false === fputcsv( $stream, $cells, ',', '"', '', "\r\n" ) ) { throw new \RuntimeException( 'csv' ); }
+            }
+            rewind( $stream );
+            $csv = stream_get_contents( $stream );
+            if ( false === $csv ) { throw new \RuntimeException( 'csv' ); }
+            return $csv;
+        } catch ( \Throwable $e ) {
+            return new \WP_Error( 'access_ledger_export', __( 'Could not prepare the export.', 'access-ledger' ), array( 'status' => 500 ) );
+        } finally {
+            fclose( $stream );
+        }
+    }
+
+    public static function serve_csv( $served, $response, $request ) {
+        if ( ! $served && '/' . self::REST_NAMESPACE . '/export' === $request->get_route()
+            && 'csv' === $request['format'] && 200 === $response->get_status()
+            && 'text/csv; charset=utf-8' === ( $response->get_headers()['Content-Type'] ?? '' ) && is_string( $response->get_data() ) ) {
+            if ( 'HEAD' !== $request->get_method() ) {
+                // Already serialized and formula-safe; HTML escaping would corrupt the CSV download.
+                echo $response->get_data(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            }
+            return true;
+        }
+        return $served;
     }
 
     private static function object_schema( $properties, $nullable = false ) {
@@ -139,16 +202,25 @@ class API {
         ), true );
         $identity = self::object_schema( array( 'email' => $string, 'user_id' => $number, 'key_matches' => $bool ) );
         $audit = self::object_schema( array( 'id' => $number, 'permission_id' => $number, 'order_id' => $number, 'actor_id' => $number, 'created_at' => $string, 'undone_at' => $date ) );
+        $pagination = array(
+            'scan_id' => array( 'type' => array( 'string', 'null' ) ), 'has_more' => $bool,
+            'next_before_id' => array( 'type' => array( 'integer', 'null' ), 'minimum' => 1 ),
+        );
         $schemas = array(
             'report' => $report, 'scan' => $scan,
+            'reports' => self::object_schema( $pagination + array( 'reports' => array( 'type' => 'array', 'maxItems' => 50, 'items' => $report ) ) ),
             'dashboard' => self::object_schema( array(
                 'scan' => $scan, 'reports' => array( 'type' => 'array', 'maxItems' => 50, 'items' => $report ),
+                'pagination' => self::object_schema( $pagination ),
                 'audits' => array( 'type' => 'array', 'maxItems' => 50, 'items' => $audit ),
                 'totals' => self::object_schema( array( 'orders' => $number, 'issues' => $number, 'repairable' => $number ) ),
             ) ),
             'preview' => self::object_schema( array( 'token' => $string, 'permission_id' => $number, 'order_id' => $number, 'before' => $identity, 'after' => $identity, 'expires_at' => array( 'type' => array( 'string', 'integer' ) ), 'explanation' => $string ) ),
             'mutation' => self::object_schema( array( 'audit_id' => $number, 'message' => $string ) ),
-            'export' => self::object_schema( array( 'generated_at' => $string, 'reports' => array( 'type' => 'array', 'maxItems' => 1000, 'items' => $report ) ) ),
+            'export' => array( 'oneOf' => array(
+                self::object_schema( array( 'generated_at' => $string, 'reports' => array( 'type' => 'array', 'maxItems' => 1000, 'items' => $report ) ) ),
+                array( 'type' => 'string', 'description' => 'CSV attachment when format=csv; one row per report, at most 1000 reports.' ),
+            ) ),
         );
         return array( '$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'access-ledger-' . $name ) + $schemas[ $name ];
     }
