@@ -1,5 +1,7 @@
 # Access Ledger — WooCommerce download troubleshooting
 
+[Screenshots and step-by-step setup tutorial](https://memberfix.studio/plugins/access-ledger/)
+
 [![Integration tests](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml/badge.svg)](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml)
 
 **Find out why a customer cannot download a purchase—before resetting anything.**
