@@ -1,10 +1,10 @@
-# Access Ledger for WooCommerce
+# Access Ledger — WooCommerce download troubleshooting
 
 [![Integration tests](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml/badge.svg)](https://github.com/memberfixstudio-ind/access-ledger/actions/workflows/test.yml)
 
 **Find out why a customer cannot download a purchase—before resetting anything.**
 
-A support workspace for digital-product stores. Inspect one order or scan recent orders, read the evidence behind each finding, and preview a narrowly verified email correction that keeps download allowances and history intact.
+A free, open-source WooCommerce plugin for troubleshooting digital-download access. Inspect one order or scan recent orders, read the evidence behind each finding, and preview a narrowly verified email correction that keeps download allowances and history intact.
 
 Version **1.1.0** adds older-findings pagination and CSV export. See the [changelog](CHANGELOG.md) and [API contract](docs/CONTRACT.md).
 
@@ -55,6 +55,24 @@ An email correction can invalidate links containing the old email. The customer 
 - Scans follow order creation dates. Use order lookup for older purchases updated recently. WP-Cron requires traffic or a system cron; the dashboard also advances scans while open.
 - This release supports WooCommerce digital downloads. MemberPress, LearnDash, subscriptions and CRM synchronization are not integrations in this release.
 
+## Common questions
+
+### Why can't a customer download a paid WooCommerce order?
+
+Payment alone does not explain download access. Look up the order in **WooCommerce → Access Ledger** to inspect its permissions, expiry, remaining allowance and customer identity. The report separates observed mismatches from expected restrictions and uncertain cases; it gives the support team evidence before they change anything.
+
+### Can I fix an email mismatch without resetting download limits?
+
+For eligible orders, Access Ledger previews a correction to the email on one existing permission. It rechecks the account, billing email, order key and permission before applying the change. Download counts, remaining allowance, expiry and history stay intact. Cases outside these checks require manual review; see [what a correction changes](#what-a-correction-changes).
+
+### Will it restore missing or revoked download permissions?
+
+No. Missing access may be intentional. Access Ledger reports the finding but never creates or revives permissions. It also does not repair missing files, CDN failures or undelivered emails.
+
+### Does it work with WooCommerce HPOS?
+
+Yes. It uses WooCommerce's order APIs and is tested with both High-Performance Order Storage and legacy order storage. The [validation record](docs/VALIDATION.md) lists the tested versions and limits.
+
 ## Privacy and security
 
 Only users with `manage_woocommerce` can use the UI or API. WordPress cookie authentication requires a REST nonce, including for pagination and exports. No unauthenticated webhook or public endpoint is installed. Reports contain customer emails; treat exports as customer records. Order keys, usable download links and file URLs are excluded from reports and exports.
@@ -72,4 +90,4 @@ Run only on a disposable database: define `ACCESS_LEDGER_TESTS=true`, activate W
 
 [Research and agent vote](docs/RESEARCH.md) · [Validation record](docs/VALIDATION.md) · [Changelog](CHANGELOG.md)
 
-Built by [Rohan Salave](https://www.linkedin.com/in/rohan-salave-362475189/) · GPL-2.0-or-later.
+Built by [Rohan Salave](https://www.linkedin.com/in/rohan-salave-362475189/) at [MemberFix Studio](https://memberfix.studio/) · GPL-2.0-or-later.
